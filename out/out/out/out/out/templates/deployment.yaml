@@ -28,4 +28,4 @@ spec:
         - name: CERTCTL_SERVER_TLS_DISABLED
           value: "true"
         - name: CERTCTL_SERVER_ADDR
-          value: ":8080"
+          value: "8080"
