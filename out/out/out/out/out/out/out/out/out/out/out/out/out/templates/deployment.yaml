@@ -13,8 +13,6 @@ spec:
       labels:
         app: certctl
     spec:
-      imagePullSecrets:
-        - name: ghcr-secret
       containers:
       - name: certctl
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
@@ -25,7 +23,3 @@ spec:
         # TODO: adjust to certctl expected env vars
         - name: DATABASE_URL
           value: "postgres://{{ .Values.postgres.username }}:{{ .Values.postgres.password }}@postgres:5432/{{ .Values.postgres.database }}"
-        - name: CERTCTL_SERVER_TLS_DISABLED
-          value: "true"
-        - name: CERTCTL_SERVER_ADDR
-          value: ":8080"
