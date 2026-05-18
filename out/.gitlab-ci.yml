@@ -5,6 +5,23 @@ stages:
 variables:
   IMAGE_NAME: ghcr.io/hou85/certctl-server
 
+debug_repo:
+  stage: build
+  image: alpine:3.22
+
+  script:
+    - echo "PWD:"
+    - pwd
+
+    - echo "FILES:"
+    - ls -lah
+
+    - echo "TREE:"
+    - find . | head -200
+
+    - echo "DOCKERFILES:"
+    - find . -iname "*dockerfile*" || true
+
 build_image:
   stage: build
   image:
