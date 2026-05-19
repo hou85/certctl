@@ -64,10 +64,10 @@ spec:
 
           - name: CERTCTL_AGENT_BOOTSTRAP_TOKEN_DENY_EMPTY
             value: "true"
-                  volumeMounts:
-                    - name: tls
-                      mountPath: /tls
-                      readOnly: true
+          volumeMounts:
+            - name: tls
+              mountPath: /tls
+              readOnly: true
 
           readinessProbe:
             httpGet:

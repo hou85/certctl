@@ -8,5 +8,5 @@ spec:
     app: certctl
   ports:
   - name: http
-    port: 443
-    targetPort: 8443
+    port: 80
+    targetPort: 8080
