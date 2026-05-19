@@ -32,39 +32,67 @@ spec:
               protocol: TCP
 
           env:
-          - name: CERTCTL_DATABASE_URL
-            value: postgres://certctl:change-me@postgres:5432/certctl?sslmode=disable
+            - name: CERTCTL_DATABASE_URL
+              value: postgres://certctl:change-me@postgres:5432/certctl?sslmode=disable
 
-          - name: CERTCTL_SERVER_HOST
-            value: "0.0.0.0"
+            - name: CERTCTL_SERVER_HOST
+              value: "0.0.0.0"
 
-          - name: CERTCTL_SERVER_PORT
-            value: "8080"
+            - name: CERTCTL_SERVER_PORT
+              value: "8080"
 
-          - name: CERTCTL_SERVER_TLS_CERT_PATH
-            value: /tls/tls.crt
+            - name: CERTCTL_SERVER_TLS_CERT_PATH
+              value: /tls/tls.crt
 
-          - name: CERTCTL_SERVER_TLS_KEY_PATH
-            value: /tls/tls.key
+            - name: CERTCTL_SERVER_TLS_KEY_PATH
+              value: /tls/tls.key
 
-          - name: CERTCTL_AUTH_TYPE
-            value: api-key
+            - name: CERTCTL_AUTH_TYPE
+              value: api-key
 
-          - name: CERTCTL_AUTH_SECRET
-            valueFrom:
-              secretKeyRef:
-                name: certctl-secret
-                key: auth-secret
+            - name: CERTCTL_AUTH_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: certctl-secret
+                  key: auth-secret
 
-          - name: CERTCTL_AGENT_BOOTSTRAP_TOKEN
-            valueFrom:
-              secretKeyRef:
-                name: certctl-secret
-                key: bootstrap-token
+            - name: CERTCTL_AGENT_BOOTSTRAP_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: certctl-secret
+                  key: bootstrap-token
 
-          - name: CERTCTL_AGENT_BOOTSTRAP_TOKEN_DENY_EMPTY
-            value: "true"
+            - name: CERTCTL_AGENT_BOOTSTRAP_TOKEN_DENY_EMPTY
+              value: "true"
+
           volumeMounts:
             - name: tls
               mountPath: /tls
               readOnly: true
+
+          startupProbe:
+            httpGet:
+              path: /ready
+              port: 8080
+              scheme: HTTPS
+            periodSeconds: 5
+            failureThreshold: 24
+            timeoutSeconds: 3
+
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8080
+              scheme: HTTPS
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+              scheme: HTTPS
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3

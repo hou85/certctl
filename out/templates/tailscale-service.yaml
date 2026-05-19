@@ -1,18 +1,32 @@
+# certctl (ClusterIP) — pour le Gateway et le trafic in-cluster
+apiVersion: v1
+kind: Service
+metadata:
+  name: certctl
+  namespace: {{ .Release.Namespace }}
+spec:
+  selector:
+    app: certctl
+  ports:
+    - name: https
+      port: 443
+      targetPort: 8080
+      protocol: TCP
+      appProtocol: https
+---
+# certctl-tailscale (LoadBalancer, géré par Tailscale uniquement)
 apiVersion: v1
 kind: Service
 metadata:
   name: certctl-tailscale
   namespace: {{ .Release.Namespace }}
   annotations:
-    tailscale.com/expose: "true"
     tailscale.com/hostname: "certctl"
-
 spec:
   type: LoadBalancer
   loadBalancerClass: tailscale
   selector:
     app: certctl
-
   ports:
     - name: https
       port: 443
