@@ -13,6 +13,8 @@ spec:
       labels:
         app: certctl
     spec:
+      imagePullSecrets:
+        - name: ghcr-secret
       containers:
       - name: certctl
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
