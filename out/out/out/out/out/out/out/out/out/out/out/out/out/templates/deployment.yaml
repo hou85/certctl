@@ -13,6 +13,10 @@ spec:
       labels:
         app: certctl
     spec:
+      volumes:
+        - name: tls
+          secret:
+            secretName: certctl-tls
       imagePullSecrets:
         - name: ghcr-secret
       containers:
@@ -20,12 +24,20 @@ spec:
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         ports:
-        - containerPort: 8080
+        - containerPort: 8443
         env:
         # TODO: adjust to certctl expected env vars
         - name: DATABASE_URL
           value: "postgres://{{ .Values.postgres.username }}:{{ .Values.postgres.password }}@postgres:5432/{{ .Values.postgres.database }}"
-        - name: CERTCTL_SERVER_TLS_DISABLED
-          value: "true"
         - name: CERTCTL_SERVER_ADDR
-          value: "8080"
+          value: ":8443"
+
+        - name: CERTCTL_SERVER_TLS_CERT_PATH
+          value: /tls/tls.crt
+
+        - name: CERTCTL_SERVER_TLS_KEY_PATH
+          value: /tls/tls.key
+        volumeMounts:
+          - name: tls
+            mountPath: /tls
+            readOnly: true
