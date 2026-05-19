@@ -28,7 +28,7 @@ spec:
         env:
         # TODO: adjust to certctl expected env vars
         - name: DATABASE_URL
-          value: "postgres://{{ .Values.postgres.username }}:{{ .Values.postgres.password }}@postgres:5432/{{ .Values.postgres.database }}"
+          value: "postgres://{{ .Values.postgres.username }}:{{ .Values.postgres.password }}@postgres:5432/{{ .Values.postgres.database }}?sslmode=disable"
         - name: CERTCTL_SERVER_ADDR
           value: "8443"
 
@@ -55,7 +55,7 @@ spec:
 
         - name: CERTCTL_AGENT_BOOTSTRAP_TOKEN_DENY_EMPTY
           value: "true"
-          
+
         volumeMounts:
           - name: tls
             mountPath: /tls
