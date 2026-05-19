@@ -18,8 +18,6 @@ spec:
       - name: postgres
         image: {{ .Values.postgres.image }}
         env:
-        - name: PGDATA
-          value: /var/lib/postgresql/data/pgdata
         - name: POSTGRES_DB
           value: {{ .Values.postgres.database | quote }}
         - name: POSTGRES_USER
@@ -39,4 +37,3 @@ spec:
       resources:
         requests:
           storage: {{ .Values.postgres.storage }}
-      storageClassName: gp2
