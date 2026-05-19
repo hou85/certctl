@@ -37,6 +37,11 @@ spec:
 
         - name: CERTCTL_SERVER_TLS_KEY_PATH
           value: /tls/tls.key
+        - name: CERTCTL_AUTH_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: certctl-secret
+              key: auth-secret
         volumeMounts:
           - name: tls
             mountPath: /tls

@@ -12,9 +12,9 @@ spec:
       sectionName: http
   rules:
     - matches:
-        - path:
-            type: PathPrefix
-            value: /
+      - path:
+          type: PathPrefix
+          value: /
       backendRefs:
-        - name: certctl
-          port: 443
+      - name: certctl
+        port: 80
