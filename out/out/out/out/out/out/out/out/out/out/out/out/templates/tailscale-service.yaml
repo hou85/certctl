@@ -1,20 +1,20 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: certctl-ts
+  name: certctl-tailscale
   namespace: {{ .Release.Namespace }}
   annotations:
     tailscale.com/expose: "true"
     tailscale.com/hostname: "certctl"
 
 spec:
-  type: ClusterIP
+  type: LoadBalancer
 
   selector:
     app: certctl
 
   ports:
-    - name: http
-      port: 80
+    - name: https
+      port: 443
       targetPort: 8080
       protocol: TCP
