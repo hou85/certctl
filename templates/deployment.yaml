@@ -13,18 +13,23 @@ spec:
       labels:
         app: certctl
     spec:
+      volumes:
+        - name: tls
+          secret:
+            secretName: certctl-tls
+
       containers:
         - name: certctl
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
-            - name: http
+            - name: https
               containerPort: 8080
               protocol: TCP
 
           env:
             - name: CERTCTL_DATABASE_URL
-              value: postgres://certctl:change-me@postgres:5432/certctl?sslmode=disable
+              value: postgres://{{ .Values.postgres.username }}:{{ .Values.postgres.password }}@postgres:5432/{{ .Values.postgres.database }}?sslmode=disable
 
             - name: CERTCTL_SERVER_HOST
               value: "0.0.0.0"
@@ -32,8 +37,11 @@ spec:
             - name: CERTCTL_SERVER_PORT
               value: "8080"
 
-            # TLS désactivé — Tailscale termine HTTPS en amont
-            # CERTCTL_SERVER_TLS_CERT_PATH et CERTCTL_SERVER_TLS_KEY_PATH supprimés
+            - name: CERTCTL_SERVER_TLS_CERT_PATH
+              value: /tls/tls.crt
+
+            - name: CERTCTL_SERVER_TLS_KEY_PATH
+              value: /tls/tls.key
 
             - name: CERTCTL_AUTH_TYPE
               value: api-key
@@ -53,11 +61,16 @@ spec:
             - name: CERTCTL_AGENT_BOOTSTRAP_TOKEN_DENY_EMPTY
               value: "true"
 
+          volumeMounts:
+            - name: tls
+              mountPath: /tls
+              readOnly: true
+
           startupProbe:
             httpGet:
               path: /ready
               port: 8080
-              scheme: HTTP
+              scheme: HTTPS
             periodSeconds: 5
             failureThreshold: 24
             timeoutSeconds: 3
@@ -66,7 +79,7 @@ spec:
             httpGet:
               path: /ready
               port: 8080
-              scheme: HTTP
+              scheme: HTTPS
             periodSeconds: 10
             timeoutSeconds: 3
             failureThreshold: 3
@@ -75,7 +88,7 @@ spec:
             httpGet:
               path: /health
               port: 8080
-              scheme: HTTP
+              scheme: HTTPS
             periodSeconds: 30
             timeoutSeconds: 5
             failureThreshold: 3
