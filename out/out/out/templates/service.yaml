@@ -3,13 +3,12 @@ kind: Service
 metadata:
   name: certctl
   namespace: {{ .Release.Namespace }}
-
 spec:
   selector:
     app: certctl
-
   ports:
-    - name: http
-      port: 80
+    - name: https
+      port: 443
       targetPort: 8080
       protocol: TCP
+      appProtocol: https

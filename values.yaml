@@ -1,7 +1,7 @@
 image:
   repository: ghcr.io/certctl-io/certctl-server
   tag: v2.0.9
-  pullPolicy: IfNotPresent
+  pullPolicy: Always
 
 server:
   auth:

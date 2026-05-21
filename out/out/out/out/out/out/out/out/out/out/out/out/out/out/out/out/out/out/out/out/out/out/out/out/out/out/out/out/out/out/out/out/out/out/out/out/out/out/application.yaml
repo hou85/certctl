@@ -6,12 +6,6 @@ metadata:
 spec:
   project: default
   source:
-    helm:
-      parameters:
-        - name: tailscale.hostname
-          value: "certctl"
-        - name: tailscale.tailnet
-          value: "tail44be45.ts.net"
     repoURL: https://gitlab-1.tail44be45.ts.net/infra/certctl.git
     targetRevision: HEAD
     path: apps/certctl

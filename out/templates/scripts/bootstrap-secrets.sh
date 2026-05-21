@@ -33,7 +33,7 @@ if ! kubectl get secret -n "$NAMESPACE" certctl-tls >/dev/null 2>&1; then
   TLS_DIR=$(mktemp -d)
   trap "rm -rf $TLS_DIR" EXIT
 
-  openssl req -x509 -newkey rsa:4096\
+  openssl req -x509 -newkey rsa:2048 \
     -keyout "$TLS_DIR/tls.key" -out "$TLS_DIR/tls.crt" \
     -days 3650 -nodes \
     -subj "/CN=$HOSTNAME" \
