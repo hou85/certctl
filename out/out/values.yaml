@@ -3,6 +3,10 @@ image:
   tag: latest
   pullPolicy: Always
 
+server:
+  auth:
+    apiKey: ""           # OBLIGATOIRE — passe via --set ou values override
+    bootstrapToken: ""   # Optionnel, généré aléatoirement si vide
 service:
   port: 80
 
@@ -13,4 +17,6 @@ postgres:
   password: change-me
   storage: 10Gi
 
-hostname: certctl.tail44be45.ts.net
+tailscale:
+  hostname: certctl
+  tailnet: tail44be45.ts.net

@@ -28,8 +28,14 @@ spec:
               protocol: TCP
 
           env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: password
+
             - name: CERTCTL_DATABASE_URL
-              value: postgres://{{ .Values.postgres.username }}:{{ .Values.postgres.password }}@postgres:5432/{{ .Values.postgres.database }}?sslmode=disable
+              value: postgres://{{ .Values.postgres.username }}:$(POSTGRES_PASSWORD)@postgres:5432/{{ .Values.postgres.database }}?sslmode=disable
 
             - name: CERTCTL_SERVER_HOST
               value: "0.0.0.0"

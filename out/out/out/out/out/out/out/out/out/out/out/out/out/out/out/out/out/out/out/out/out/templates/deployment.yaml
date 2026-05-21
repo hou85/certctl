@@ -27,8 +27,8 @@ spec:
         - containerPort: 8443
         env:
         # TODO: adjust to certctl expected env vars
-        - name: DATABASE_URL
-          value: "postgres://{{ .Values.postgres.username }}:{{ .Values.postgres.password }}@postgres:5432/{{ .Values.postgres.database }}?sslmode=disable"
+        - name: CERTCTL_DATABASE_URL
+          value: postgres://certctl:change-me@postgres:5432/certctl?sslmode=disable
         - name: CERTCTL_SERVER_ADDR
           value: "8443"
 

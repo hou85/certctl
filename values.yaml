@@ -1,7 +1,7 @@
 image:
-  repository: ghcr.io/hou85/certctl-server
-  tag: latest
-  pullPolicy: Always
+  repository: ghcr.io/certctl-io/certctl-server
+  tag: v2.0.9
+  pullPolicy: IfNotPresent
 
 server:
   auth:
