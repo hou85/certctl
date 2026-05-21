@@ -1,5 +1,5 @@
 image:
-  repository: ghcr.io/hou85/certctl-server
+  repository: docker.io/giantswarm/certctl
   tag: latest
   pullPolicy: Always
 
