@@ -18,5 +18,5 @@ postgres:
   storage: 10Gi
 
 tailscale:
-  hostname: certctl.tail44be45.ts.net
-  
+  hostname: certctl
+  tailnet: tail44be45.ts.net

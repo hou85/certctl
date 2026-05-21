@@ -4,7 +4,7 @@ metadata:
   name: certctl-tailscale
   namespace: {{ .Release.Namespace }}
   annotations:
-    tailscale.com/hostname: "certctl"
+    tailscale.com/hostname: {{ .Values.tailscale.hostname | quote }}
     tailscale.com/https: "true"
 spec:
   type: LoadBalancer
@@ -12,8 +12,8 @@ spec:
   selector:
     app: certctl
   ports:
-    - name: http
-      port: 80
+    - name: https
+      port: 443
       targetPort: 8080
       protocol: TCP
-      appProtocol: http
+      appProtocol: https
