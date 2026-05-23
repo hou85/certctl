@@ -53,7 +53,7 @@ spec:
               value: none
               
             - name: CERTCTL_DEMO_MODE_ACK
-              value: "true"
+              value: true
 
             - name: CERTCTL_DEMO_MODE_ACK_TS
               value: $(date +%s)
