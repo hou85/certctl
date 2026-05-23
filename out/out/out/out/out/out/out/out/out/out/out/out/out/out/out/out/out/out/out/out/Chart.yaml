@@ -1,6 +1,0 @@
-apiVersion: v2
-name: certctl
-description: certctl deployment for ArgoCD
-type: application
-version: 0.1.0
-appVersion: "latest"
