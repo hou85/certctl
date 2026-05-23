@@ -50,7 +50,13 @@ spec:
               value: /tls/tls.key
 
             - name: CERTCTL_AUTH_TYPE
-              value: api-key
+              value: none
+              
+            - name: CERTCTL_DEMO_MODE_ACK
+              value: "true"
+
+            - name: CERTCTL_DEMO_MODE_ACK_TS
+              value: "(date +%s)"
 
             - name: CERTCTL_AUTH_SECRET
               valueFrom:
