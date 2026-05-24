@@ -1,0 +1,21 @@
+image:
+  repository: ghcr.io/dexidp/dex
+  tag: v2.41.1
+  pullPolicy: IfNotPresent
+
+replicas: 1
+
+# Hostname Tailscale (label court — utilisé dans Dex issuer URL config)
+# Le FQDN complet sera <hostname>.<tailnet>, routé par Terraform vers ce Service.
+tailscale:
+  hostname: dex
+  tailnet: tail44be45.ts.net
+
+# Hostname certctl (client OIDC) pour construire la redirectURI du staticClient Dex
+certctl:
+  hostname: certctl
+  tailnet: tail44be45.ts.net
+
+# Nom du Secret contenant les credentials (créé hors GitOps par bootstrap-secrets.sh)
+# Doit contenir : github-client-id, github-client-secret, certctl-client-secret
+secretName: dex-secrets
