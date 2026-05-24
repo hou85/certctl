@@ -5,20 +5,24 @@ image:
 
 replicas: 1
 
-# Hostname Tailscale (label court — Tailscale construit le FQDN avec ton tailnet)
+# Hostname Tailscale (label court — Tailscale construit le FQDN)
+# Le hostname complet sera <hostname>.<tailnet>, utilisé dans la HTTPRoute
 tailscale:
   hostname: dex
-  # FQDN du tailnet, utilisé pour construire issuer URL et redirect URI
   tailnet: tail44be45.ts.net
 
-# Hostname certctl (client OIDC de Dex) pour construire la redirect URI du staticClient
+# Hostname certctl (client OIDC) pour construire la redirectURI du staticClient Dex
 certctl:
   hostname: certctl
   tailnet: tail44be45.ts.net
 
-# Nom du Secret contenant les credentials (créé hors GitOps par bootstrap-secrets.sh).
-# Doit contenir les clés :
-#   - github-client-id
-#   - github-client-secret
-#   - certctl-client-secret
+# Référence à la Gateway Envoy qui route le trafic vers Dex
+# Cette Gateway doit accepter les routes cross-namespace
+# (spec.listeners[].allowedRoutes.namespaces.from: All)
+gateway:
+  name: main
+  namespace: argocd
+  sectionName: http
+
+# Nom du Secret contenant les credentials (créé hors GitOps par bootstrap-secrets.sh)
 secretName: dex-secrets

@@ -18,6 +18,12 @@ spec:
           value: "certctl"
         - name: certctl.tailnet
           value: "tail44be45.ts.net"
+        - name: gateway.name
+          value: "main"
+        - name: gateway.namespace
+          value: "argocd"
+        - name: gateway.sectionName
+          value: "http"
     repoURL: https://gitlab-1.tail44be45.ts.net/infra/certctl.git
     targetRevision: HEAD
     path: apps/dex
