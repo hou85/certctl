@@ -4,7 +4,7 @@ metadata:
   name: certctl
   namespace: {{ .Release.Namespace }}
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: certctl
@@ -50,13 +50,7 @@ spec:
               value: /tls/tls.key
 
             - name: CERTCTL_AUTH_TYPE
-              value: none
-              
-            - name: CERTCTL_DEMO_MODE_ACK
-              value: "true"
-
-            - name: CERTCTL_DEMO_MODE_ACK_TS
-              value: "{{ now | unixEpoch }}"
+              value: api-key
 
             - name: CERTCTL_AUTH_SECRET
               valueFrom:

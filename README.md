@@ -1,93 +1,199 @@
-# certctl
+# certctl + Dex (GitOps)
 
+Déploiement K8s de [certctl](https://github.com/ryant71/certctl) avec authentification
+OIDC via Dex et backend GitHub, exposé via Tailscale.
 
-
-## Getting started
-
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
-
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
-
-## Add your files
-
-* [Create](https://docs.gitlab.com/user/project/repository/web_editor/#create-a-file) or [upload](https://docs.gitlab.com/user/project/repository/web_editor/#upload-a-file) files
-* [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+## Architecture
 
 ```
-cd existing_repo
-git remote add origin https://gitlab-1.tail44be45.ts.net/infra/certctl.git
-git branch -M main
-git push -uf origin main
+Utilisateur (navigateur sur tailnet)
+    ↓ https://certctl.tail44be45.ts.net
+Proxy Tailscale (TCP passthrough, cert auto-signé)
+    ↓
+certctl pod (TLS 1.3, port 8080)
+    ↓ delegation OIDC pour login web
+Dex (https://dex.tail44be45.ts.net, terminaison HTTPS Let's Encrypt par Tailscale)
+    ↓ backend OAuth2
+GitHub
 ```
 
-## Integrate with your tools
+## Structure du repo
 
-* [Set up project integrations](https://gitlab-1.tail44be45.ts.net/infra/certctl/-/settings/integrations)
+```
+.
+├── apps/
+│   ├── certctl/                  # Chart Helm certctl
+│   │   ├── Chart.yaml
+│   │   ├── values.yaml
+│   │   └── templates/
+│   └── dex/                      # Chart Helm Dex
+│       ├── Chart.yaml
+│       ├── values.yaml
+│       └── templates/
+├── argocd-apps/                  # Applications ArgoCD (appliquées à part)
+│   ├── certctl.yaml
+│   └── dex.yaml
+├── scripts/
+│   ├── bootstrap-secrets.sh      # Crée les Secrets hors GitOps (une fois)
+│   └── configure-oidc.sh         # Configure le provider OIDC dans certctl (une fois)
+└── README.md
+```
 
-## Collaborate with your team
+## Procédure de déploiement (premier setup)
 
-* [Invite team members and collaborators](https://docs.gitlab.com/user/project/members/)
-* [Create a new merge request](https://docs.gitlab.com/user/project/merge_requests/creating_merge_requests/)
-* [Automatically close issues from merge requests](https://docs.gitlab.com/user/project/issues/managing_issues/#closing-issues-automatically)
-* [Enable merge request approvals](https://docs.gitlab.com/user/project/merge_requests/approvals/)
-* [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
+### 1. Créer l'OAuth App GitHub
 
-## Test and Deploy
+1. https://github.com/settings/developers → **New OAuth App**
+2. Remplir :
+   - **Application name** : `certctl-dex`
+   - **Homepage URL** : `https://dex.tail44be45.ts.net`
+   - **Authorization callback URL** : `https://dex.tail44be45.ts.net/callback`
+3. Note le **Client ID** et génère un **Client Secret**
 
-Use the built-in continuous integration in GitLab.
+### 2. Bootstrap des Secrets (hors GitOps)
 
-* [Get started with GitLab CI/CD](https://docs.gitlab.com/ci/quick_start/)
-* [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/user/application_security/sast/)
-* [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/topics/autodevops/requirements/)
-* [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/user/clusters/agent/)
-* [Set up protected environments](https://docs.gitlab.com/ci/environments/protected_environments/)
+```bash
+export GITHUB_CLIENT_ID="Iv1.xxxxxxxxxxxxxxxx"
+export GITHUB_CLIENT_SECRET="xxxxxxxxxxxxxxxxxxxxxxxxx"
 
-***
+./scripts/bootstrap-secrets.sh
+```
 
-# Editing this README
+Crée dans le cluster :
+- `certctl/postgres-secret` (password Postgres aléatoire)
+- `certctl/certctl-secret` (API key + bootstrap token aléatoires)
+- `certctl/certctl-tls` (cert auto-signé pour le serveur HTTPS de certctl)
+- `dex/dex-secrets` (credentials GitHub + client secret OIDC Dex↔certctl)
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+Fichiers locaux persistants dans `~/.certctl/` :
+- `tls.crt` / `tls.key` — cert serveur
+- `dex-certctl-client-secret` — client secret OIDC
 
-## Suggestions for a good README
+### 3. (Optionnel) Trust le cert auto-signé localement
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+Pour utiliser curl/Chrome sans `-k` / sans warning :
 
-## Name
-Choose a self-explaining name for your project.
+```bash
+# macOS
+sudo security add-trusted-cert -d -r trustRoot \
+  -k /Library/Keychains/System.keychain ~/.certctl/tls.crt
+```
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+### 4. Apply les Applications ArgoCD
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+```bash
+kubectl apply -f argocd-apps/certctl.yaml
+kubectl apply -f argocd-apps/dex.yaml
+```
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+ArgoCD synchronise tout. Surveille dans l'UI ArgoCD ou :
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+```bash
+kubectl get pods -n certctl -w
+kubectl get pods -n dex -w
+```
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+### 5. Configurer le provider OIDC dans certctl
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+⚠️ Attendre que **certctl ET dex** soient Healthy dans ArgoCD avant de lancer.
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+```bash
+./scripts/configure-oidc.sh
+```
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+Le script :
+1. Désactive temporairement `selfHeal` ArgoCD sur l'app certctl
+2. Bascule certctl en mode démo pour pouvoir créer le provider OIDC
+3. POST le provider OIDC via l'API certctl
+4. Rebasule certctl en `api-key`
+5. Nettoie les permissions résiduelles
+6. Réactive `selfHeal`
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+### 6. Test login
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+```bash
+# Cmd+Q Chrome puis :
+open -a "Google Chrome" https://certctl.tail44be45.ts.net/
+```
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+Clique "Sign in with GitHub via Dex" → redirection GitHub → retour authentifié.
 
-## License
-For open source projects, say how it is licensed.
+## Configuration
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+### values certctl (`apps/certctl/values.yaml`)
+
+| Variable | Default | Description |
+|---|---|---|
+| `image.repository` | `ghcr.io/hou85/certctl-server` | Image du serveur certctl |
+| `image.tag` | `latest` | Tag de l'image |
+| `tailscale.hostname` | `certctl` | Label DNS court (Tailscale construit le FQDN) |
+| `tailscale.tailnet` | `tail44be45.ts.net` | Tailnet pour le FQDN du cert TLS |
+
+### values dex (`apps/dex/values.yaml`)
+
+| Variable | Default | Description |
+|---|---|---|
+| `image.tag` | `v2.41.1` | Version Dex |
+| `tailscale.hostname` | `dex` | Label DNS court |
+| `tailscale.tailnet` | `tail44be45.ts.net` | Tailnet (utilisé dans issuer URL) |
+| `certctl.hostname` | `certctl` | Label DNS court certctl |
+| `certctl.tailnet` | `tail44be45.ts.net` | Tailnet certctl (pour la redirectURI) |
+
+## Maintenance
+
+### Rotation du secret client OIDC Dex↔certctl
+
+```bash
+# 1. Régénère le secret local
+openssl rand -base64 32 > ~/.certctl/dex-certctl-client-secret
+
+# 2. Met à jour le Secret K8s
+kubectl create secret generic dex-secrets -n dex \
+  --from-literal=github-client-id="$GITHUB_CLIENT_ID" \
+  --from-literal=github-client-secret="$GITHUB_CLIENT_SECRET" \
+  --from-literal=certctl-client-secret="$(cat ~/.certctl/dex-certctl-client-secret)" \
+  --dry-run=client -o yaml | kubectl apply -f -
+
+# 3. Redémarre Dex
+kubectl rollout restart deploy/dex -n dex
+
+# 4. Met à jour le provider OIDC dans certctl (relance le script)
+./scripts/configure-oidc.sh
+```
+
+### Reset complet
+
+```bash
+# ⚠️ DESTRUCTIF : supprime toutes les données certctl + dex
+kubectl delete namespace certctl dex
+kubectl delete -f argocd-apps/
+
+# Puis recommence la procédure de déploiement
+```
+
+### Récupérer l'API key certctl
+
+```bash
+kubectl get secret -n certctl certctl-secret \
+  -o jsonpath='{.data.auth-secret}' | base64 -d
+```
+
+## Troubleshooting
+
+### Dex pas accessible
+
+```bash
+kubectl logs -n dex -l app=dex --tail=50
+kubectl logs -n tailscale -l tailscale.com/parent-resource=dex-tailscale --tail=50
+```
+
+### Le dashboard certctl crash en api-key
+
+C'est un bug connu du frontend certctl dans cette version. Le script
+`configure-oidc.sh` règle ça en configurant OIDC (le frontend utilise alors
+le flow OIDC web au lieu de paniquer sur `api-key` sans provider).
+
+### Le cert TLS dans le navigateur n'est pas trusté
+
+Voir étape 3 ci-dessus, ou ouvre directement `https://certctl.tail44be45.ts.net`
+et accepte le warning (cert auto-signé).

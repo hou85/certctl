@@ -1,0 +1,24 @@
+image:
+  repository: ghcr.io/dexidp/dex
+  tag: v2.41.1
+  pullPolicy: IfNotPresent
+
+replicas: 1
+
+# Hostname Tailscale (label court — Tailscale construit le FQDN avec ton tailnet)
+tailscale:
+  hostname: dex
+  # FQDN du tailnet, utilisé pour construire issuer URL et redirect URI
+  tailnet: tail44be45.ts.net
+
+# Hostname certctl (client OIDC de Dex) pour construire la redirect URI du staticClient
+certctl:
+  hostname: certctl
+  tailnet: tail44be45.ts.net
+
+# Nom du Secret contenant les credentials (créé hors GitOps par bootstrap-secrets.sh).
+# Doit contenir les clés :
+#   - github-client-id
+#   - github-client-secret
+#   - certctl-client-secret
+secretName: dex-secrets

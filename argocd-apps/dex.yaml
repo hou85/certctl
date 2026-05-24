@@ -1,24 +1,32 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: certctl
+  name: dex
   namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
 spec:
   project: default
   source:
     helm:
       parameters:
         - name: tailscale.hostname
-          value: "certctl"
+          value: "dex"
         - name: tailscale.tailnet
+          value: "tail44be45.ts.net"
+        - name: certctl.hostname
+          value: "certctl"
+        - name: certctl.tailnet
           value: "tail44be45.ts.net"
     repoURL: https://gitlab-1.tail44be45.ts.net/infra/certctl.git
     targetRevision: HEAD
-    path: apps/certctl
+    path: apps/dex
   destination:
     server: https://kubernetes.default.svc
-    namespace: certctl
+    namespace: dex
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
